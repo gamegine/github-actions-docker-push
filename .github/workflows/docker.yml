@@ -27,25 +27,25 @@ jobs:
       # Checkout repository source code
       # https://github.com/actions/checkout
       - name: Checkout repository
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@v6.0.3
 
       # Install and configure Docker
       # https://github.com/docker/setup-docker-action
       - name: Set up Docker
         # Docker is already up and running on GitHub-hosted runners on Linux and Windows.
         if: runner.environment != 'github-hosted'
-        uses: docker/setup-docker-action@v5.1.0
+        uses: docker/setup-docker-action@v5.2.0
 
       # Add support for multi-platform builds with QEMU (optional)
       # https://github.com/docker/setup-qemu-action
       - name: Set up QEMU
         if: vars.DOCKER_PLATFORMS != ''
-        uses: docker/setup-qemu-action@v4.0.0
+        uses: docker/setup-qemu-action@v4.1.0
 
       # Configure Buildx builder
       # https://github.com/docker/setup-buildx-action
       - name: Set up Buildx
-        uses: docker/setup-buildx-action@v4.0.0
+        uses: docker/setup-buildx-action@v4.1.0
         with:
           # Optional custom BuildKit configuration
           buildkitd-config-inline: ${{ vars.BUILDX_CONFIG }}
@@ -54,20 +54,20 @@ jobs:
       # https://github.com/docker/login-action
       - name: Login to Docker Hub
         if: vars.DOCKER_USERNAME != ''
-        uses: docker/login-action@v4.1.0
+        uses: docker/login-action@v4.2.0
         with:
           username: ${{ vars.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
       - name: Login to GitHub Registry (GHCR)
         if: vars.USE_GITHUB_REGISTRY == 'true'
-        uses: docker/login-action@v4.1.0
+        uses: docker/login-action@v4.2.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Login to custom/private registry
         if: vars.DOCKER_REGISTRY != ''
-        uses: docker/login-action@v4.1.0
+        uses: docker/login-action@v4.2.0
         with:
           registry: ${{ vars.DOCKER_REGISTRY }}
           username: ${{ vars.DOCKER_REGISTRY_USERNAME }}
@@ -77,7 +77,7 @@ jobs:
       # https://github.com/docker/metadata-action
       - name: Extract Docker metadata
         id: meta
-        uses: docker/metadata-action@v6.0.0
+        uses: docker/metadata-action@v6.1.0
         with:
           # Target image names
           images: |
@@ -99,7 +99,7 @@ jobs:
       # Build and publish Docker image
       # https://github.com/docker/build-push-action
       - name: Build and push
-        uses: docker/build-push-action@v7.1.0
+        uses: docker/build-push-action@v7.2.0
         with:
           context: .
           push: true
