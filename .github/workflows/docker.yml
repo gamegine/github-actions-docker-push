@@ -18,6 +18,45 @@ on:
     branches:
       - main
       - master
+  workflow_call:
+    inputs:
+      DOCKER_IMAGES:
+        required: false
+        type: string
+      USE_GITHUB_REGISTRY:
+        required: false
+        type: string
+        default: 'false'
+      DOCKER_USERNAME:
+        required: false
+        type: string
+      DOCKER_REGISTRY:
+        required: false
+        type: string
+      DOCKER_REGISTRY_USERNAME:
+        required: false
+        type: string
+      DOCKER_PLATFORMS:
+        required: false
+        type: string
+      BUILDX_CONFIG:
+        required: false
+        type: string
+    secrets:
+      DOCKER_TOKEN:
+        required: false
+      DOCKER_REGISTRY_TOKEN:
+        required: false
+      #GITHUB_TOKEN: # GitHub automatically creates it for every workflow run
+
+env:
+  DOCKER_IMAGES: ${{ inputs.DOCKER_IMAGES || vars.DOCKER_IMAGES }}
+  USE_GITHUB_REGISTRY: ${{ inputs.USE_GITHUB_REGISTRY || vars.USE_GITHUB_REGISTRY }}
+  DOCKER_USERNAME: ${{ inputs.DOCKER_USERNAME || vars.DOCKER_USERNAME }}
+  DOCKER_REGISTRY: ${{ inputs.DOCKER_REGISTRY || vars.DOCKER_REGISTRY }}
+  DOCKER_REGISTRY_USERNAME: ${{ inputs.DOCKER_REGISTRY_USERNAME || vars.DOCKER_REGISTRY_USERNAME }}
+  DOCKER_PLATFORMS: ${{ inputs.DOCKER_PLATFORMS || vars.DOCKER_PLATFORMS }}
+  BUILDX_CONFIG: ${{ inputs.BUILDX_CONFIG || vars.BUILDX_CONFIG }}
 
 permissions:
   contents: read
@@ -34,8 +73,7 @@ jobs:
   docker:
     name: Docker Build & Push
     runs-on: ubuntu-latest
-    if: vars.DOCKER_IMAGES != '' || vars.USE_GITHUB_REGISTRY == 'true'
-
+    if: vars.DOCKER_IMAGES != '' || vars.USE_GITHUB_REGISTRY == 'true' || inputs.DOCKER_IMAGES != '' || inputs.USE_GITHUB_REGISTRY == 'true'
     steps:
       # Checkout repository source code
       # https://github.com/actions/checkout
@@ -52,8 +90,8 @@ jobs:
       # Add support for multi-platform builds with QEMU (optional)
       # https://github.com/docker/setup-qemu-action
       - name: Set up QEMU
-        if: vars.DOCKER_PLATFORMS != ''
-        uses: docker/setup-qemu-action@v4.0.0
+        if: env.DOCKER_PLATFORMS != '' && github.event_name != 'pull_request'
+        uses: docker/setup-qemu-action@v4.1.0
 
       # Configure Buildx builder
       # https://github.com/docker/setup-buildx-action
@@ -61,29 +99,29 @@ jobs:
         uses: docker/setup-buildx-action@v4.0.0
         with:
           # Optional custom BuildKit configuration
-          buildkitd-config-inline: ${{ vars.BUILDX_CONFIG }}
+          buildkitd-config-inline: ${{ env.BUILDX_CONFIG }}
 
       # Authenticate to registries
       # https://github.com/docker/login-action
       - name: Login to Docker Hub
-        if: vars.DOCKER_USERNAME != ''
+        if: env.DOCKER_USERNAME != ''
         uses: docker/login-action@v4.1.0
         with:
-          username: ${{ vars.DOCKER_USERNAME }}
+          username: ${{ env.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
       - name: Login to GitHub Registry (GHCR)
-        if: vars.USE_GITHUB_REGISTRY == 'true'
+        if: env.USE_GITHUB_REGISTRY == 'true'
         uses: docker/login-action@v4.1.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Login to custom/private registry
-        if: vars.DOCKER_REGISTRY != ''
+        if: env.DOCKER_REGISTRY != ''
         uses: docker/login-action@v4.1.0
         with:
-          registry: ${{ vars.DOCKER_REGISTRY }}
-          username: ${{ vars.DOCKER_REGISTRY_USERNAME }}
+          registry: ${{ env.DOCKER_REGISTRY }}
+          username: ${{ env.DOCKER_REGISTRY_USERNAME }}
           password: ${{ secrets.DOCKER_REGISTRY_TOKEN }}
 
       # Generate Docker tags and labels
@@ -94,8 +132,8 @@ jobs:
         with:
           # Target image names
           images: |
-            ${{ vars.DOCKER_IMAGES }}
-            name=ghcr.io/${{ github.repository }},enable=${{ vars.USE_GITHUB_REGISTRY == 'true' }}
+            ${{ env.DOCKER_IMAGES }}
+            name=ghcr.io/${{ github.repository }},enable=${{ env.USE_GITHUB_REGISTRY == 'true' }}
           # Generate Docker tags based on git references and semantic versioning
           tags: |
             # Git commit SHA
@@ -125,7 +163,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
           # Optional multi-platform build ex: linux/amd64,linux/arm64
-          platforms: ${{ github.event_name == 'pull_request' && 'linux/amd64' || vars.DOCKER_PLATFORMS }} # multi-platform builds are slower, disable on PRs to reduce CI time.
+          platforms: ${{ github.event_name == 'pull_request' && 'linux/amd64' || env.DOCKER_PLATFORMS }} # multi-platform builds are slower, disable on PRs to reduce CI time.
           # Software Bill of Material (SBOM) and provenance attestations add metadata about the contents of your image, and how it was built.
           provenance: ${{ github.event_name != 'pull_request' }} # Generating the image dependency/package inventory adds generation time, Disable PRs to reduce CI time.
           sbom: ${{ github.event_name != 'pull_request' }} # Disabled for PRs to reduce CI time.
@@ -135,7 +173,7 @@ jobs:
           load: false # Do not load the image into the local Docker daemon after the build (faster CI, lower disk usage)
 
       - name: Generate artifact attestation
-        if: vars.USE_GITHUB_REGISTRY == 'true' && github.event_name != 'pull_request'
+        if: env.USE_GITHUB_REGISTRY == 'true' && github.event_name != 'pull_request'
         uses: actions/attest@v4
         with:
           subject-name: ghcr.io/${{ github.repository }}
