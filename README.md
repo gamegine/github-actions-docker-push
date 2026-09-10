@@ -25,11 +25,13 @@ This workflow automates Docker image builds using Buildx, supports caching, SBOM
 | Variable                 | Description                | Example                 |
 | ------------------------ | -------------------------- | ----------------------- |
 | DOCKER_IMAGES            | Docker image name(s)       | myorg/myapp             |
-| DOCKER_USERNAME          | Docker Hub username        | myuser                  |
-| DOCKER_PLATFORMS         | Target platforms for build | linux/amd64,linux/arm64 |
 | USE_GITHUB_REGISTRY      | Enable GHCR publishing     | true / false            |
+|                          |                            |                         |
+| DOCKER_USERNAME          | Docker Hub username        | myuser                  |
 | DOCKER_REGISTRY          | Custom registry URL        | myregistry.com          |
 | DOCKER_REGISTRY_USERNAME | Custom registry username   | myuser                  |
+|                          |    build configuration     |                         |
+| DOCKER_PLATFORMS         | Target platforms for build | linux/amd64,linux/arm64 |
 | BUILDX_CONFIG            | BuildKit configuration     |                         |
 
 ## :key: Secrets
@@ -37,7 +39,8 @@ This workflow automates Docker image builds using Buildx, supports caching, SBOM
 | Secret                | Description                      |
 | --------------------- | -------------------------------- |
 | DOCKER_TOKEN          | Docker Hub access token          |
-| DOCKER_REGISTRY_TOKEN | Private registry token           |
+| DOCKER_REGISTRY_TOKEN | Custom registry token            |
+| GITHUB_TOKEN          |                                  |
 
 ## :closed_lock_with_key: Registry Authentication
 
@@ -95,6 +98,7 @@ This workflow runs when:
 
 - push to main or master
 - push of any git tag
+- pull request to main or master
 - manual trigger via GitHub Actions UI
 
 # :bookmark: Automatic Tagging
@@ -104,10 +108,12 @@ The workflow generates docker images tags automatically:
 - sha-abcdefg (commit hash)
 - branch name (main, develop, etc.)
 - git tag (v1.0.0)
+- pull request (pr-1)
 - latest (only on default branch)
 - semantic versioning:
-  - 1.2.3
-  - 1.2
+  - major (1)
+  - major.minor (1.2)
+  - version (1.2.3)
 
 # :test_tube: Example Setup
 
