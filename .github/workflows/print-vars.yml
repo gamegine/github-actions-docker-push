@@ -13,3 +13,7 @@ jobs:
           echo "repository=${{ github.repository }}"
           echo "workflow_ref=${{ github.workflow_ref }}"
           echo "job_workflow_ref=${{ github.job_workflow_ref }}"
+      - name: env
+        run: env
+      - name: github
+        run: echo ${{ github }}"
