@@ -220,6 +220,7 @@ jobs:
         run: |
           echo "repository=${{ github.repository }}"
           echo "workflow_ref=${{ github.workflow_ref }}"
+          echo "job_workflow_ref=${{ github.job_workflow_ref }}
 
           echo "^https://github\.com/${{ github.repository }}/\.github/workflows/[^@]+@refs/(heads|tags)/.+$"
           echo "^https://github\.com/${{ github.workflow_ref }}$"
