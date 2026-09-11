@@ -218,10 +218,18 @@ jobs:
         env:
           IMAGES: ${{ steps.cosign.outputs.images }}
         run: |
+          echo "repository=${{ github.repository }}"
+          echo "workflow_ref=${{ github.workflow_ref }}"
+
+          echo "^https://github\.com/${{ github.repository }}/\.github/workflows/[^@]+@refs/(heads|tags)/.+$"
+          echo "^https://github\.com/${{ github.workflow_ref }}$"
+    
           while IFS= read -r image; do
             echo "Verifying $image"
             cosign verify \
               "$image" \
-              --certificate-identity-regexp "^https://github\.com/${{ github.repository }}/\.github/workflows/[^@]+@refs/(heads|tags)/.+$" \
+              --certificate-identity-regexp "^https://github\.com/${{ github.workflow_ref }}$" \
               --certificate-oidc-issuer "https://token.actions.githubusercontent.com"
           done <<< "$IMAGES"
+
+#              --certificate-identity-regexp "^https://github\.com/${{ github.repository }}/\.github/workflows/[^@]+@refs/(heads|tags)/.+$" \
