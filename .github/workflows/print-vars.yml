@@ -9,10 +9,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: print
+        env:
+          ref: ${{ github.job_workflow_ref }}"
         run: |
           echo "repository=${{ github.repository }}"
           echo "workflow_ref=${{ github.workflow_ref }}"
           echo "job_workflow_ref=${{ github.job_workflow_ref }}"
+          echo "job_workflow_ref=${{ job.workflow_ref }}"
+          
       - name: env
         run: env
       - name: github
