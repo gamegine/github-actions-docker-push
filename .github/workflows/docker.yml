@@ -220,10 +220,10 @@ jobs:
         run: |
           echo "repository=${{ github.repository }}"
           echo "workflow_ref=${{ github.workflow_ref }}"
-          echo "job.workflow_ref=${{ job.workflow_ref }}
+          echo "job.workflow_ref=${{ job.workflow_ref }}"
 
           echo "^https://github\.com/${{ github.repository }}/\.github/workflows/[^@]+@refs/(heads|tags)/.+$"
-          echo "^https://github\.com/${{ github.workflow_ref }}$"
+          echo "^https://github\.com/${{ job.workflow_ref }}$"
     
           while IFS= read -r image; do
             echo "Verifying $image"
