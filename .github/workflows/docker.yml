@@ -174,7 +174,8 @@ jobs:
               echo "Signing $image"
               cosign sign --yes "$image"
             done <<< "$IMAGES"
-      - name: Verify signature (optional)
+      - name: Verify signature
+        id: verify-signature
         if: github.event_name != 'pull_request'
         continue-on-error: true
         env:
@@ -187,3 +188,8 @@ jobs:
               --certificate-identity-regexp "^https://github\.com/${{ github.repository }}/\.github/workflows/[^@]+@refs/(heads|tags)/.+$" \
               --certificate-oidc-issuer "https://token.actions.githubusercontent.com"
           done <<< "$IMAGES"
+      - name: Warning - signature verification failed
+        if: ${{ steps.verify-signature.outcome == 'failure' }}
+        run: |
+          echo "::warning title=Signature verification::Signature verification failed !"
+
